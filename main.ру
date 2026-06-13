@@ -1,0 +1,25 @@
+import os
+import google.generativeai as genai
+from telegram.ext import Updater, MessageHandler, Filters
+
+TOKEN = os.environ.get("TELEGRAM_TOKEN")
+GEMINI = os.environ.get("GEMINI_API_KEY")
+
+genai.configure(api_key=GEMINI)
+model = genai.GenerativeModel("gemini-1.5-flash")
+chats = {}
+
+def reply(update, context):
+    uid = update.effective_user.id
+    if uid not in chats:
+        chats[uid] = model.start_chat(history=[])
+    try:
+        r = chats[uid].send_message(update.message.text)
+        update.message.reply_text(r.text)
+    except:
+        update.message.reply_text("Ошибка 🙏")
+
+u = Updater(TOKEN)
+u.dispatcher.add_handler(MessageHandler(Filters.text, reply))
+u.start_polling()
+u.idle()
